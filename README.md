@@ -1,0 +1,1 @@
+# Binance-Spot-History
