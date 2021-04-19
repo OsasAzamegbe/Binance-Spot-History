@@ -3,7 +3,7 @@ import os
 import requests
 from typing import Dict, List, Union
 
-from businessUtils.apiUtils import compute_signature, timestamp, write_to_json
+from businessUtils.apiUtils import compute_signature, timestamp, write_to_json, write_to_excel
 
 load_dotenv()
 
@@ -32,11 +32,15 @@ def get_all_orders(symbol: str) -> Union[List, Dict]:
 
 def write_trade_history(symbols: List[str]) -> None:
     '''
-    write the trade history of symbol pairs to a json file
+    write the trade history of symbol pairs to a json file and excel file
     '''
     trade_history = []
     for symbol in symbols:
         symbol_order_history = get_all_orders(symbol)
         trade_history.extend(symbol_order_history)
 
-    write_to_json(trade_history, 'spot_order_history.json')
+    #sort trades from oldest to newest
+    trade_history.sort(key=lambda x: x["time"])
+
+    write_to_json(trade_history, 'spot_order_history')
+    write_to_excel(trade_history, 'spot_order_history')
