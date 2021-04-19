@@ -3,3 +3,5 @@ env
 .env
 *.xlsx
 *.csv
+__pycache__
+*.json
