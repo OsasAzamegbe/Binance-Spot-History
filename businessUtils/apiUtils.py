@@ -1,19 +1,7 @@
-from typing import Dict, List, Union, Any
-import pandas as pd
+from typing import Dict, Union 
 import hashlib
 import hmac
 import time
-import json
-
-
-def _map_timestamp_to_datetime(trade_object: Dict[str, Any]) -> Dict[str, Any]:
-    '''
-    change the time field in trade_object from a timestamp in milliseconds to a date and time
-    '''
-    for timefield in ("time", "updateTime"):
-        trade_object[timefield] = time.ctime(trade_object[timefield]/1000)
-
-    return trade_object
 
 
 def format_query_params(query_params: Dict[str, Union[int, str, bool]]) -> str:
@@ -38,24 +26,4 @@ def timestamp() -> int:
     '''
     return int(time.time() * 1000)
 
-def write_to_json(json_object: Union[List, Dict], filename: str) -> None:
-    '''
-    write a json object to a json file.
-    '''
-    with open(f"{filename}_{str(timestamp())}.json", 'w') as file:
-        json.dump(json_object, file, indent=4)
 
-
-def write_to_excel(json_object: Union[List, Dict], filename: str) -> None:
-    '''
-    write a json object to an excel file (*.xlsx).
-    '''
-    pd.DataFrame(json_object).to_excel(f"{filename}_{str(timestamp())}.xlsx")
-
-
-def format_trade_history(trade_history: List) -> None:
-    '''
-    Convert timestamps to datetime object and sort trade_history object list
-    '''
-    trade_history.sort(key=lambda x: x["time"])
-    list(map(_map_timestamp_to_datetime, trade_history))

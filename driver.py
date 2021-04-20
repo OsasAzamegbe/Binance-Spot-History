@@ -1,4 +1,4 @@
-from businessApi import binance
+from businessLogic import portfolio
 
 
 if __name__ == '__main__':
@@ -14,4 +14,4 @@ if __name__ == '__main__':
         "DOGEUSDT",
         "AAVEUSDT"
     ]
-    binance.write_trade_history(symbols)
+    portfolio.write_trade_history(symbols)

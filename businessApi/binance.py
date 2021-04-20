@@ -5,10 +5,7 @@ from typing import Dict, List, Union
 
 from businessUtils.apiUtils import (
     compute_signature, 
-    timestamp, 
-    write_to_json, 
-    write_to_excel,
-    format_trade_history
+    timestamp
 )
 
 load_dotenv()
@@ -34,19 +31,3 @@ def get_all_orders(symbol: str) -> Union[List, Dict]:
 
     response = requests.get(GET_ORDERS_ENDPOINT, params=params, headers=headers)
     return response.json()
-
-
-def write_trade_history(symbols: List[str]) -> None:
-    '''
-    write the trade history of symbol pairs to a json file and excel file
-    '''
-    trade_history = []
-    for symbol in symbols:
-        symbol_order_history = get_all_orders(symbol)
-        trade_history.extend(symbol_order_history)
-
-    format_trade_history(trade_history)
-
-    filename = 'spot_order_history'
-    write_to_json(trade_history, filename)
-    write_to_excel(trade_history, filename)
