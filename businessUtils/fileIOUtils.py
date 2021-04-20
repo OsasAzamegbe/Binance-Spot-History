@@ -1,4 +1,4 @@
-from typing import Dict, List, Union, Any, Generator
+from typing import Dict, List, Union, Any
 import pandas as pd
 import json
 
@@ -26,10 +26,10 @@ def write_to_excel(json_object: Union[List, Dict], filename: str, replace_existi
     pd.DataFrame(json_object).to_excel(f"{filename}.xlsx")
 
 
-def read_from_json(filename: str) -> Generator[Dict[str, Any], None, None]:
+def read_from_json(filename: str) -> Union[List, Dict]:
     '''
-    generator that reads data from a json file and yields it as a dict,
+    reads data from a json file
     '''
-    with open(filename, 'r') as json_file:
-        for json_object in json.load(json_file):
-            yield json_object
+    with open(f"{filename}.json", 'r') as json_file:
+        return json.load(json_file)
+
