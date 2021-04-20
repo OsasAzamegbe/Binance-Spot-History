@@ -22,7 +22,7 @@ def _headers() -> Dict[str, str]:
     }
 
 
-def _resolve_params(params: Dict[str, Any]) -> Dict[str, Any]:
+def _resolve_params(params: Dict[str, Any]={}) -> Dict[str, Any]:
     '''
     get request params resolved
     ''' 
@@ -55,4 +55,17 @@ def get_spot_account_snapshot() -> Dict[str, Any]:
     params = _resolve_params({"type": "SPOT"})
 
     response = requests.get(GET_ACCOUNT_SNAPSHOT_ENDPOINT, params=params, headers=headers)
+    return response.json()
+
+
+def get_ticker_price(ticker: str) -> Union[List, Dict]:
+    '''
+    get the latest price of a ticker.
+    ''' 
+    GET_TICKER_PRICE_ENDPOINT = f"{BASE_URL}/api/v3/ticker/price"
+
+    headers = _headers()
+    params = {"symbol": ticker}
+
+    response = requests.get(GET_TICKER_PRICE_ENDPOINT, params=params, headers=headers)
     return response.json()
