@@ -53,9 +53,9 @@ def write_to_excel(json_object: Union[List, Dict], filename: str) -> None:
     pd.DataFrame(json_object).to_excel(f"{filename}_{str(timestamp())}.xlsx")
 
 
-def format_trade_history(trade_history: List) -> List:
+def format_trade_history(trade_history: List) -> None:
     '''
     Convert timestamps to datetime object and sort trade_history object list
     '''
     trade_history.sort(key=lambda x: x["time"])
-    return list(map(_map_timestamp_to_datetime, trade_history))
+    list(map(_map_timestamp_to_datetime, trade_history))
