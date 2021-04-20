@@ -58,7 +58,6 @@ def create_ticker_summary(ticker: str, trades: List[Dict[str, Any]]) -> Dict[str
         "symbol": ticker,
         "date": str(datetime.now()),
         "actualQty": reduce_field(trades, "actualQty"),
-        "fee": reduce_field(trades, "fee"),
         "actualCost": reduce_field(trades, "actualCost"),
         "totalCost": reduce_field(trades, "totalCost")
     }
