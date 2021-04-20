@@ -16,5 +16,6 @@ if __name__ == '__main__':
         "VETUSDT"
     ]
     # portfolio.write_trade_history(symbols)
-    portfolio.write_portfolio_stats("spot_order_history_1618930550877")
-    portfolio.write_porfolio_summary("portfolio_stats")
+    # portfolio.write_portfolio_stats("spot_order_history_1618930550877")
+    # portfolio.write_porfolio_summary("portfolio_stats")
+    portfolio.write_spot_balance()

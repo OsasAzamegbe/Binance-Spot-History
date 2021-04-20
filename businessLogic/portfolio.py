@@ -1,7 +1,11 @@
 from typing import List, Dict, Any
 from collections import defaultdict
+import time
 
-from businessApi.binance import get_all_orders
+from businessApi.binance import (
+    get_all_orders, 
+    get_spot_account_snapshot
+)
 from businessUtils.portfolioUtils import (
     format_trade_history, 
     create_ticker_summary, 
@@ -54,3 +58,19 @@ def write_porfolio_summary(portfolio_stats_filename: str) -> None:
 
     write_to_json(porfolio_summary, "portfolio_summary", replace_existing=True)
     write_to_excel(porfolio_summary, "portfolio_summary", replace_existing=True)
+
+
+def write_spot_balance() -> None:
+    '''
+    write latest daily snapshots of spot account to json and excel
+    '''
+    spot_balance = get_spot_account_snapshot()
+
+    write_to_json(spot_balance, "spot_balance", replace_existing=True)
+
+    latest_spot_balance = spot_balance["snapshotVos"][-1]
+    balance_datetime = latest_spot_balance["updateTime"]/1000
+    formatted_balance_datetime = time.strftime("%A-%d-%m-%Y_%H-%M-%S", time.localtime(balance_datetime))
+    excel_filename = f"spot_balance_{formatted_balance_datetime}"
+
+    write_to_excel(latest_spot_balance["data"]["balances"], excel_filename, replace_existing=True)
