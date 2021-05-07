@@ -1,6 +1,8 @@
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Union, Any, Set
 from datetime import datetime
 import time
+
+from businessUtils.fileIOUtils import read_from_json
 
 
 def _map_timestamp_to_datetime(trade_object: Dict[str, Any]) -> Dict[str, Any]:
@@ -58,8 +60,61 @@ def create_ticker_summary(ticker: str, trades: List[Dict[str, Any]]) -> Dict[str
         "symbol": ticker,
         "date": str(datetime.now()),
         "actualQty": reduce_field(trades, "actualQty"),
-        "actualCost": reduce_field(trades, "actualCost"),
-        "totalCost": reduce_field(trades, "totalCost")
+        "totalCost": reduce_field(trades, "totalCost"),
+        "actualCost": reduce_field(trades, "actualCost")
     }
 
     return ticker_summary
+
+
+def resolve_spot_balance(spot_balance: List[Dict[str, Any]], ticker_prices: Dict[str, Dict[str, str]]) -> List[Dict[str, Any]]:
+    '''
+    resolve spot coin balances with their prices
+    '''
+    return [
+        {
+            "symbol": balance["asset"],
+            "balanceQty": balance["free"],
+            "price": float(ticker_prices[balance["asset"]]["price"]),
+            "actualValue": float(ticker_prices[balance["asset"]]["price"]) * float(balance["free"]),
+            "locked": balance["locked"]
+        }
+        if balance["asset"] != "USDT" else
+        {
+            "symbol": balance["asset"],
+            "balanceQty": balance["free"],
+            "price": 1.00,
+            "actualValue": float(balance["free"]),
+            "locked": balance["locked"]
+        }
+        for balance in spot_balance
+    ]
+
+
+def reduce_trade_history(trade_history: List[Dict[str, Any]], new_trade_history: List[Dict[str, Any]]) -> None:
+    '''
+    reduce the new trade history objects into the new trade history without duplicates
+    '''
+    cached_trade_history: Set[int] = set(trade["orderId"] for trade in trade_history)
+    trade_history.extend(trade for trade in new_trade_history if trade["orderId"] not in cached_trade_history)
+
+
+def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    '''
+    resolve the objects in portfolio summary
+    '''    
+    spot_balance = {balance["symbol"]: balance for balance in read_from_json("spot_balance")}
+    portfolio_summary = [
+        {
+            **summary, 
+            **spot_balance[summary["symbol"].split("USDT")[0]]
+        }
+        for summary in portfolio_summary
+    ]
+    return [
+        {
+            **summary,
+            "pnlPercentage": (float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100
+        }
+        for summary in portfolio_summary
+    ]
