@@ -102,6 +102,7 @@ def reduce_trade_history(trade_history: List[Dict[str, Any]], new_trade_history:
 def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     '''
     resolve the objects in portfolio summary
+    filter objects with balance < 1 USDT and sort by most profitable.
     '''    
     spot_balance = {balance["symbol"]: balance for balance in read_from_json("spot_balance")}
     portfolio_summary = [
@@ -111,10 +112,12 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
         }
         for summary in portfolio_summary
     ]
-    return [
+    return sorted((
         {
             **summary,
             "pnlPercentage": (float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100
         }
         for summary in portfolio_summary
-    ]
+        if float(summary["actualValue"]) >= 1.0
+    )
+    , key=lambda x: x["pnlPercentage"], reverse=True)

@@ -2,7 +2,7 @@ from businessLogic import portfolio
 
 
 if __name__ == '__main__':
-    symbols = [
+    symbols = (
         "ETHUSDT",
         "BTCUSDT",
         "LINKUSDT",
@@ -14,7 +14,8 @@ if __name__ == '__main__':
         "DOGEUSDT",
         "AAVEUSDT",
         "VETUSDT"
-    ]
+    )
+
     portfolio.write_trade_history(symbols, replace_existing=True)
     portfolio.write_portfolio_stats("spot_order_history")
     portfolio.write_spot_balance()
