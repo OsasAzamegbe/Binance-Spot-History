@@ -105,14 +105,14 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
     filter objects with balance < 1 USDT and sort by most profitable.
     '''    
     spot_balance = {balance["symbol"]: balance for balance in read_from_json("spot_balance")}
-    portfolio_summary = [
+    portfolio_summary = (
         {
             **summary, 
             **spot_balance[summary["symbol"].split("USDT")[0]]
         }
         for summary in portfolio_summary
-    ]
-    return sorted((
+    )
+    portfolio_summary = sorted((
         {
             **summary,
             "pnlPercentage": (float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100
@@ -121,3 +121,20 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
         if float(summary["actualValue"]) >= 1.0
     )
     , key=lambda x: x["pnlPercentage"], reverse=True)
+    
+    portfolio_cost = portfolio_value = 0.0
+
+    for coin in portfolio_summary:
+        portfolio_cost += coin["actualCost"]
+        portfolio_value += coin["actualValue"]
+    
+    portfolio_summary.append(
+        {
+            "portfolioCost": portfolio_cost,
+            "portfolioValue": portfolio_value,
+            "portfolioPNL": portfolio_value - portfolio_cost,
+            "portfolioPNL%": (portfolio_value - portfolio_cost) / portfolio_cost * 100
+        }
+    )
+
+    return portfolio_summary
