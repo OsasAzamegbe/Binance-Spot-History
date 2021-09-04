@@ -13,10 +13,12 @@ if __name__ == '__main__':
         "XRPUSDT",
         "DOGEUSDT",
         "AAVEUSDT",
-        "VETUSDT"
+        "VETUSDT",
+        "MATICUSDT",
+        "LTCUSDT"
     )
 
     portfolio.write_trade_history(symbols, replace_existing=True)
-    portfolio.write_portfolio_stats("spot_order_history")
     portfolio.write_spot_balance()
+    portfolio.write_portfolio_stats("spot_order_history")    
     portfolio.write_portfolio_summary("portfolio_stats")
