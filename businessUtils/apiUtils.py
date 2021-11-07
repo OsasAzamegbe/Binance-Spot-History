@@ -1,4 +1,8 @@
-from typing import Dict, Union 
+from businessUtils.errorUtils import ClientException
+from businessUtils.logUtils import LogLevel, log
+
+from typing import Dict, Union, Any 
+from functools import wraps
 import hashlib
 import hmac
 import time
@@ -26,4 +30,14 @@ def timestamp() -> int:
     '''
     return int(time.time() * 1000)
 
+def http_request(request_function) -> Any:
+    ''' base internal method for sending HTTP requests'''
+    @wraps(request_function)
+    def func(*args, **kwargs):
+        try:
+            return request_function(*args, **kwargs)
+        except Exception as e:
+            log(LogLevel.ERROR, str(e))
+            raise ClientException(str(e))
 
+    return func

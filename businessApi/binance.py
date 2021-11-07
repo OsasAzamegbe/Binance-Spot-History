@@ -1,12 +1,14 @@
+from businessUtils.apiUtils import (
+    compute_signature, 
+    timestamp
+)
+from businessApi.client import Client
+
 from dotenv import load_dotenv
 import os
 import requests
 from typing import Dict, List, Union, Any
 
-from businessUtils.apiUtils import (
-    compute_signature, 
-    timestamp
-)
 
 load_dotenv()
 
@@ -71,7 +73,7 @@ def get_ticker_price(ticker: str) -> Union[List, Dict]:
     return response.json()
 
 
-class Binance(object):
+class Binance(Client):
     def __init__(self):
         self.base_url: str = "https://api3.binance.com"
 
@@ -103,8 +105,7 @@ class Binance(object):
         headers = self._headers()
         params = self._resolve_params({"symbol": symbol})
 
-        response = requests.get(GET_ORDERS_ENDPOINT, params=params, headers=headers)
-        return response.json()
+        return self.send_get_request(GET_ORDERS_ENDPOINT, params=params, headers=headers)
 
 
     def get_spot_account_snapshot(self) -> Dict[str, Any]:
@@ -116,8 +117,7 @@ class Binance(object):
         headers = self._headers()
         params = self._resolve_params({"type": "SPOT"})
 
-        response = requests.get(GET_ACCOUNT_SNAPSHOT_ENDPOINT, params=params, headers=headers)
-        return response.json()
+        return self.send_get_request(GET_ACCOUNT_SNAPSHOT_ENDPOINT, params=params, headers=headers)
 
 
     def get_ticker_price(self, ticker: str) -> Union[List, Dict]:
@@ -129,5 +129,4 @@ class Binance(object):
         headers = self._headers()
         params = {"symbol": ticker}
 
-        response = requests.get(GET_TICKER_PRICE_ENDPOINT, params=params, headers=headers)
-        return response.json()
+        return self.send_get_request(GET_TICKER_PRICE_ENDPOINT, params=params, headers=headers)
