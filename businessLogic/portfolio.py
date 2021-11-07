@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from collections import defaultdict
 import time
 
@@ -95,3 +95,8 @@ def write_spot_balance() -> None:
 
     write_to_excel(spot_balance, excel_filename, replace_existing=True)
     write_to_json(spot_balance, filename, replace_existing=True)
+
+
+class Portfolio(object):
+    def __init__(self, trade_pairs: Tuple[str]):
+        self.trade_pairs = trade_pairs

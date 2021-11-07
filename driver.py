@@ -1,6 +1,7 @@
 from businessLogic import portfolio
 from businessUtils.switchUtils import Switch
 from businessUtils.logUtils import LogLevel, log
+from businessLogic.portfolio import Portfolio
 
 
 if __name__ == '__main__':
@@ -23,7 +24,7 @@ if __name__ == '__main__':
         )
 
         if Switch.check_switch("use_refactored_code"):
-            pass
+            Portfolio(symbols)
         else:
             portfolio.write_trade_history(symbols, replace_existing=True)
             portfolio.write_spot_balance()
@@ -31,4 +32,5 @@ if __name__ == '__main__':
             portfolio.write_portfolio_summary("portfolio_stats")
     except Exception as e:
         log(LogLevel.ERROR, str(e))
+        raise e
     

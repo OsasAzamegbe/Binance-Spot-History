@@ -1,11 +1,10 @@
-from typing import Dict
 from businessUtils.errorUtils import RuntimeException
 from typing import Dict
 
 
 class Switch:
     switches: Dict[str, bool] = {
-        "use_refactored_code": False
+        "use_refactored_code": True
     }
 
     def __init__(self) -> None:
