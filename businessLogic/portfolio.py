@@ -109,6 +109,12 @@ class Portfolio(object):
         self.trade_pairs = trade_pairs
         self.binance = Binance()
 
+    def update(self):
+        '''
+        Update the portfolio with new data from binance
+        '''
+        self.write_trade_history()
+
     def write_trade_history(self) -> None:
         '''
         write the trade history of symbol pairs to a json file and excel file
