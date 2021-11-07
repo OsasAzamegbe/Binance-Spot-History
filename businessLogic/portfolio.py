@@ -18,6 +18,7 @@ from businessUtils.fileIOUtils import (
     read_from_json
 )
 from businessUtils.switchUtils import Switch
+from businessUtils.logUtils import LogLevel, log
 
 from typing import List, Dict, Any, Tuple
 from collections import defaultdict
@@ -107,3 +108,25 @@ class Portfolio(object):
     def __init__(self, trade_pairs: Tuple[str]):
         self.trade_pairs = trade_pairs
         self.binance = Binance()
+
+    def write_trade_history(self) -> None:
+        '''
+        write the trade history of symbol pairs to a json file and excel file
+        '''
+        trade_history: List[Dict[str, Any]] = []
+        for symbol in self.trade_pairs:
+            log(LogLevel.INFO, "Fetching order history for symbol: ", symbol)
+            symbol_order_history = self.binance.get_all_orders(symbol)
+            trade_history.extend(symbol_order_history)
+
+        format_trade_history(trade_history)
+
+        filename = 'spot_order_history'
+
+        log(LogLevel.INFO, "Fetching old trade order history")
+        full_trade_history: List[Dict[str, Any]] = read_from_json(filename)
+        reduce_trade_history(full_trade_history, trade_history)
+        log(LogLevel.INFO, "Success updating trade order history: ", full_trade_history)
+        
+        write_to_json(full_trade_history, filename)
+        write_to_excel(full_trade_history, filename)
