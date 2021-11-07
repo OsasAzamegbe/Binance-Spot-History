@@ -25,7 +25,7 @@ from collections import defaultdict
 import time
 
 
-def write_trade_history(symbols: List[str], replace_existing: bool = True) -> None:
+def write_trade_history(symbols: List[str]) -> None:
     '''
     write the trade history of symbol pairs to a json file and excel file
     '''
@@ -41,8 +41,8 @@ def write_trade_history(symbols: List[str], replace_existing: bool = True) -> No
     full_trade_history: List[Dict[str, Any]] = read_from_json(filename)
     reduce_trade_history(full_trade_history, trade_history)
     
-    write_to_json(full_trade_history, filename, replace_existing)
-    write_to_excel(full_trade_history, filename, replace_existing)
+    write_to_json(full_trade_history, filename)
+    write_to_excel(full_trade_history, filename)
 
 def write_portfolio_stats(trade_history_filename:str) -> None:
     '''
@@ -54,7 +54,7 @@ def write_portfolio_stats(trade_history_filename:str) -> None:
         if spot_trade["status"] == "FILLED":                             
             trade_history_dict[spot_trade["symbol"]].append(resolve_spot_trade(spot_trade))
 
-    write_to_json(trade_history_dict, "portfolio_stats", replace_existing=True)
+    write_to_json(trade_history_dict, "portfolio_stats")
 
 
 def write_portfolio_summary(portfolio_stats_filename: str) -> None:
@@ -70,8 +70,8 @@ def write_portfolio_summary(portfolio_stats_filename: str) -> None:
 
     portfolio_summary = resolve_portfolio_summary(portfolio_summary)
 
-    write_to_json(portfolio_summary, "portfolio_summary", replace_existing=True)
-    write_to_excel(portfolio_summary, "portfolio_summary", replace_existing=True)
+    write_to_json(portfolio_summary, "portfolio_summary")
+    write_to_excel(portfolio_summary, "portfolio_summary")
 
 
 def write_spot_balance() -> None:
@@ -100,8 +100,8 @@ def write_spot_balance() -> None:
         ticker_prices
     )
 
-    write_to_excel(spot_balance, excel_filename, replace_existing=True)
-    write_to_json(spot_balance, filename, replace_existing=True)
+    write_to_excel(spot_balance, excel_filename)
+    write_to_json(spot_balance, filename)
 
 
 class Portfolio(object):

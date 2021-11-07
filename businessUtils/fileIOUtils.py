@@ -5,7 +5,7 @@ import json
 from businessUtils.apiUtils import timestamp
 
 
-def write_to_json(json_object: Union[List, Dict], filename: str, replace_existing: bool=False) -> None:
+def write_to_json(json_object: Union[List, Dict], filename: str, replace_existing: bool=True) -> None:
     '''
     write a json object to a json file.
     '''
@@ -16,7 +16,7 @@ def write_to_json(json_object: Union[List, Dict], filename: str, replace_existin
         json.dump(json_object, file, indent=4)
 
 
-def write_to_excel(json_object: Union[List, Dict], filename: str, replace_existing: bool=False) -> None:
+def write_to_excel(json_object: Union[List, Dict], filename: str, replace_existing: bool=True) -> None:
     '''
     write a json object to an excel file (*.xlsx).
     '''
