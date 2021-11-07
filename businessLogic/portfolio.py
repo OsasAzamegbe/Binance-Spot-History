@@ -1,7 +1,3 @@
-from typing import List, Dict, Any, Tuple
-from collections import defaultdict
-import time
-
 from businessApi.binance import (
     Binance,
     get_all_orders, 
@@ -21,6 +17,12 @@ from businessUtils.fileIOUtils import (
     write_to_json,
     read_from_json
 )
+from businessUtils.switchUtils import Switch
+
+from typing import List, Dict, Any, Tuple
+from collections import defaultdict
+import time
+
 
 def write_trade_history(symbols: List[str], replace_existing: bool = True) -> None:
     '''
@@ -79,7 +81,10 @@ def write_spot_balance() -> None:
 
     latest_spot_balance = spot_balance_payload["snapshotVos"][-1]
     balance_datetime = latest_spot_balance["updateTime"]/1000
-    formatted_balance_datetime = time.strftime("%A-%d-%m-%Y_%H-%M-%S", time.localtime(balance_datetime))
+    if Switch.check_switch("use_new_date_format_for_balance"):
+        formatted_balance_datetime = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(balance_datetime))
+    else:    
+        formatted_balance_datetime = time.strftime("%A-%d-%m-%Y_%H-%M-%S", time.localtime(balance_datetime))
     filename = "spot_balance"
     excel_filename = f"{filename}_{formatted_balance_datetime}"
 
