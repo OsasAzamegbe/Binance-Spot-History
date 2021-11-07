@@ -4,7 +4,7 @@ from typing import Dict
 
 class Switch:
     switches: Dict[str, bool] = {
-        "use_refactored_code": True
+        "use_refactored_code": False
     }
 
     def __init__(self) -> None:
