@@ -19,8 +19,7 @@ if __name__ == '__main__':
             "AAVEUSDT",
             "VETUSDT",
             "MATICUSDT",
-            "LTCUSDT",
-            "USDTUSDT"
+            "LTCUSDT"
         )
 
         if Switch.check_switch("use_refactored_code"):
