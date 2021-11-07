@@ -3,6 +3,7 @@ from collections import defaultdict
 import time
 
 from businessApi.binance import (
+    Binance,
     get_all_orders, 
     get_spot_account_snapshot,
     get_ticker_price
@@ -100,3 +101,4 @@ def write_spot_balance() -> None:
 class Portfolio(object):
     def __init__(self, trade_pairs: Tuple[str]):
         self.trade_pairs = trade_pairs
+        self.binance = Binance()
