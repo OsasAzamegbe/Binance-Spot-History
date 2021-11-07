@@ -25,6 +25,7 @@ if __name__ == '__main__':
         if Switch.check_switch("use_refactored_code"):
             Portfolio(symbols)
         else:
+            log(LogLevel.INFO, "Starting driver")
             portfolio.write_trade_history(symbols, replace_existing=True)
             portfolio.write_spot_balance()
             portfolio.write_portfolio_stats("spot_order_history")

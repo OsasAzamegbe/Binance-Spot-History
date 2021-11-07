@@ -8,5 +8,10 @@ class LogLevel:
 
 
 def log(log_level: LogLevel, *args):
+    log_dir: str = "logs"
     caller = getframeinfo(stack()[1][0])
-    print(f"{datetime.now()} - {log_level} {caller.filename}:{caller.lineno} - ", *args)
+    datetime_object = datetime.now()
+    log_file_name = f"{log_dir}/crypto_log{datetime_object.isoformat(timespec='hours')}.txt"
+    with open(log_file_name, "w") as log_file:
+        print(f"{datetime_object} - {log_level} {caller.filename}:{caller.lineno} - ", *args, file=log_file)
+ 
