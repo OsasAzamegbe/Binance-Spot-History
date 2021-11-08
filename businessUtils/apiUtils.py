@@ -1,3 +1,4 @@
+from requests.models import Response
 from businessUtils.errorUtils import ClientException
 from businessUtils.logUtils import LogLevel, log
 
@@ -24,20 +25,29 @@ def compute_signature(query_params: Dict[str, Union[int, str, bool]], secret_key
     
     return signature
 
+
 def timestamp() -> int:
     '''
     return current timestamp in milliseconds.
     '''
     return int(time.time() * 1000)
 
+
+def is_success_response(status_code: int) -> bool:
+    return status_code == 200
+
+
 def http_request(request_function) -> Any:
     ''' base internal method for sending HTTP requests'''
     @wraps(request_function)
     def func(*args, **kwargs):
         try:
-            return request_function(*args, **kwargs)
+            response :Response = request_function(*args, **kwargs)
+            if is_success_response(response.status_code):
+                return response.json()
+            raise ClientException(response.json())
         except Exception as e:
             log(LogLevel.ERROR, str(e))
-            raise ClientException(str(e))
+            raise e
 
     return func

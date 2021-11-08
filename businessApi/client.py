@@ -14,6 +14,6 @@ class Client(object):
         ''' send HTTP get request to `urlendpoint`'''
         log(LogLevel.INFO, f"Sending GET request to: {url_endpoint}. With arguments: args={args} kwargs={kwargs}.")
         response = requests.get(url_endpoint, *args, **kwargs)
-        log(LogLevel.INFO, f"Received response from {url_endpoint}: {response.json()}")
-        return response.json()
+        log(LogLevel.INFO, f"Received response from {url_endpoint} with status={response.status_code}: {response.json()}")
+        return response
 
