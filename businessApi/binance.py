@@ -1,8 +1,6 @@
 from businessUtils.apiUtils import (
     compute_signature, 
-    timestamp, 
-    http_request
-)
+    timestamp)
 from businessApi.client import Client
 
 from dotenv import load_dotenv
@@ -97,7 +95,6 @@ class Binance(Client):
         return params
 
 
-    @http_request
     def get_all_orders(self, symbol: str) -> Union[List, Dict]:
         '''
         get all spot trading orders.
@@ -110,7 +107,6 @@ class Binance(Client):
         return self.send_get_request(GET_ORDERS_ENDPOINT, params=params, headers=headers)
 
 
-    @http_request
     def get_spot_account_snapshot(self) -> Dict[str, Any]:
         '''
         get snapshot of spot account as a Dict.
@@ -123,7 +119,6 @@ class Binance(Client):
         return self.send_get_request(GET_ACCOUNT_SNAPSHOT_ENDPOINT, params=params, headers=headers)
 
 
-    @http_request
     def get_ticker_price(self, ticker: str) -> Union[List, Dict]:
         '''
         get the latest price of a ticker.

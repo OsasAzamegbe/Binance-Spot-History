@@ -24,6 +24,8 @@ from typing import List, Dict, Any, Tuple
 from collections import defaultdict
 import time
 
+binance = Binance()
+
 
 def write_trade_history(symbols: List[str]) -> None:
     '''
@@ -31,7 +33,7 @@ def write_trade_history(symbols: List[str]) -> None:
     '''
     trade_history: List[Dict[str, Any]] = []
     for symbol in symbols:
-        symbol_order_history = get_all_orders(symbol)
+        symbol_order_history = binance.get_all_orders(symbol)
         trade_history.extend(symbol_order_history)
 
     format_trade_history(trade_history)
@@ -78,7 +80,7 @@ def write_spot_balance() -> None:
     '''
     write latest daily snapshots of spot account to json and excel
     '''
-    spot_balance_payload = get_spot_account_snapshot()
+    spot_balance_payload = binance.get_spot_account_snapshot()
 
     latest_spot_balance = spot_balance_payload["snapshotVos"][-1]
     balance_datetime = latest_spot_balance["updateTime"]/1000
@@ -90,7 +92,7 @@ def write_spot_balance() -> None:
     excel_filename = f"{filename}_{formatted_balance_datetime}"
 
     ticker_prices = {
-        balance["asset"]: get_ticker_price(balance["asset"] + "USDT")
+        balance["asset"]: binance.get_ticker_price(balance["asset"] + "USDT")
         for balance in latest_spot_balance["data"]["balances"]
         if balance["asset"] != "USDT"
     }
@@ -107,6 +109,7 @@ def write_spot_balance() -> None:
 class Portfolio(object):
     def __init__(self, trade_pairs: Tuple[str]):
         self.trade_pairs = trade_pairs
+        self.coins = tuple(map(lambda x : x[:-4], trade_pairs)) #remove the 'USDT' suffix
         self.binance = Binance()
 
     def update(self):
