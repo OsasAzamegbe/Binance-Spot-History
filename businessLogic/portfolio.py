@@ -4,6 +4,7 @@ from businessApi.binance import (
     get_spot_account_snapshot,
     get_ticker_price
 )
+from businessApi.client import Client
 from businessUtils.portfolioUtils import (
     format_trade_history, 
     create_ticker_summary, 
@@ -20,7 +21,7 @@ from businessUtils.fileIOUtils import (
 from businessUtils.switchUtils import Switch
 from businessUtils.logUtils import LogLevel, log
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Set, Tuple, Union
 from collections import defaultdict
 import time
 
@@ -82,8 +83,8 @@ def write_spot_balance() -> None:
     '''
     spot_balance_payload = binance.get_spot_account_snapshot()
 
-    latest_spot_balance = spot_balance_payload["snapshotVos"][-1]
-    balance_datetime = latest_spot_balance["updateTime"]/1000
+    latest_spot_balance: Dict[str, Union[int, str, Dict]] = spot_balance_payload["snapshotVos"][-1]
+    balance_datetime: int = latest_spot_balance["updateTime"]/1000
     if Switch.check_switch("use_new_date_format_for_balance"):
         formatted_balance_datetime = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(balance_datetime))
     else:    
@@ -107,18 +108,23 @@ def write_spot_balance() -> None:
 
 
 class Portfolio(object):
-    def __init__(self, trade_pairs: Tuple[str]):
-        self.trade_pairs = trade_pairs
-        self.coins = tuple(map(lambda x : x[:-4], trade_pairs)) #remove the 'USDT' suffix
-        self.binance = Binance()
+    def __init__(self):
+        self.base_currency = "USDT"
+        self.coins_filename = "spot_tickers"
+        self.coins: Set[str] = set(read_from_json(self.coins_filename))
+        self.binance: Client = Binance()
+        
         self.spot_order_history: List[Dict[str, Any]] = []
         self.spot_trades: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self.spot_balance: List[Dict[str, Any]] = []
+        self.ticker_prices: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     def update(self):
         '''
         Update the portfolio with new data from binance
         '''
         log(LogLevel.INFO, "Updating Crypto Porfolio.")
+        self._write_spot_balance()
         self._write_spot_order_history()
         self._write_refined_spot_trades()
 
@@ -141,9 +147,9 @@ class Portfolio(object):
         write the spot trade history of symbol pairs to a json file and excel file
         '''
         log(LogLevel.INFO, "Starting spot trade order history update.")
-        for symbol in self.trade_pairs:
+        for symbol in self.coins:
             log(LogLevel.INFO, "Fetching spot order history for symbol: ", symbol)
-            symbol_order_history = self.binance.get_all_orders(symbol)
+            symbol_order_history = self.binance.get_all_orders(symbol + self.base_currency)
             self.spot_order_history.extend(symbol_order_history)
 
         format_trade_history(self.spot_order_history)
@@ -160,3 +166,38 @@ class Portfolio(object):
         write_to_excel(full_trade_history, filename)
         log(LogLevel.INFO, "Success updating spot trade order history.")
 
+    def _write_spot_balance(self) -> None:
+        '''
+        write latest daily snapshots of spot account to json and excel
+        '''
+        spot_balance_payload = binance.get_spot_account_snapshot()
+        latest_spot_balance: Dict[str, Union[int, str, Dict]] = spot_balance_payload["snapshotVos"][-1]
+
+        self._update_tickers({
+            balance["asset"] for balance in latest_spot_balance["data"]["balances"] 
+            if balance["asset"] != "USDT"
+        })
+        self._get_current_ticker_prices() 
+
+        self.spot_balance: List[Dict[str, Any]] = resolve_spot_balance(
+            latest_spot_balance["data"]["balances"], 
+            self.ticker_prices
+        )
+
+        filename = "spot_balance"
+        write_to_excel(self.spot_balance, filename)
+        write_to_json(self.spot_balance, filename)
+
+    def _update_tickers(self, balance_tickers: Set[str]) -> None:
+        '''
+        update self.coins with new coins from the account balance tickers
+        '''
+        self.coins |= balance_tickers
+        write_to_json(list(self.coins), self.coins_filename)
+
+    def _get_current_ticker_prices(self) -> None:
+        '''
+        update `self.ticker_prices` with latest price info for each tick in `tickers`
+        '''
+        for tick in self.coins:
+            self.ticker_prices[tick] = binance.get_ticker_price(tick + self.base_currency)
