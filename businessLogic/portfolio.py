@@ -127,6 +127,7 @@ class Portfolio(object):
         self._write_spot_balance()
         self._write_spot_order_history()
         self._write_refined_spot_trades()
+        log(LogLevel.INFO, "Done with Portfolio update.")
 
     def _write_refined_spot_trades(self) -> None:
         '''

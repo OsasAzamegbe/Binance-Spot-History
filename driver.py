@@ -7,6 +7,7 @@ from businessLogic.portfolio import Portfolio
 if __name__ == '__main__':
     try:
         if Switch.check_switch("use_refactored_code"):
+            log(LogLevel.INFO, "Starting driver... Invoking Portfolio instance...")
             portfolio = Portfolio()
             portfolio.update()
         else:
