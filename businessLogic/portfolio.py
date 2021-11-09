@@ -111,31 +111,52 @@ class Portfolio(object):
         self.trade_pairs = trade_pairs
         self.coins = tuple(map(lambda x : x[:-4], trade_pairs)) #remove the 'USDT' suffix
         self.binance = Binance()
+        self.spot_order_history: List[Dict[str, Any]] = []
+        self.spot_trades: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
     def update(self):
         '''
         Update the portfolio with new data from binance
         '''
-        self.write_trade_history()
+        log(LogLevel.INFO, "Updating Crypto Porfolio.")
+        self._write_spot_order_history()
+        self._write_refined_spot_trades()
 
-    def write_trade_history(self) -> None:
+    def _write_refined_spot_trades(self) -> None:
         '''
-        write the trade history of symbol pairs to a json file and excel file
+        write refined spot trades to a json file
         '''
-        trade_history: List[Dict[str, Any]] = []
+        log(LogLevel.INFO, "Starting refinement of spot trades.")
+
+        for spot_trade in self.spot_order_history:
+            if spot_trade["status"] == "FILLED":                             
+                self.spot_trades[spot_trade["symbol"]].append(resolve_spot_trade(spot_trade))
+
+        write_to_json(self.spot_trades, "spot_trades")
+        log(LogLevel.INFO, "Successfully refined spot trades.")
+
+
+    def _write_spot_order_history(self) -> None:
+        '''
+        write the spot trade history of symbol pairs to a json file and excel file
+        '''
+        log(LogLevel.INFO, "Starting spot trade order history update.")
         for symbol in self.trade_pairs:
-            log(LogLevel.INFO, "Fetching order history for symbol: ", symbol)
+            log(LogLevel.INFO, "Fetching spot order history for symbol: ", symbol)
             symbol_order_history = self.binance.get_all_orders(symbol)
-            trade_history.extend(symbol_order_history)
+            self.spot_order_history.extend(symbol_order_history)
 
-        format_trade_history(trade_history)
+        format_trade_history(self.spot_order_history)
 
         filename = 'spot_order_history'
 
-        log(LogLevel.INFO, "Fetching old trade order history")
+        log(LogLevel.INFO, "Fetching old trade order history.")
         full_trade_history: List[Dict[str, Any]] = read_from_json(filename)
-        reduce_trade_history(full_trade_history, trade_history)
-        log(LogLevel.INFO, "Success updating trade order history: ", full_trade_history)
+        
+        reduce_trade_history(full_trade_history, self.spot_order_history)
+        self.spot_order_history = full_trade_history
         
         write_to_json(full_trade_history, filename)
         write_to_excel(full_trade_history, filename)
+        log(LogLevel.INFO, "Success updating spot trade order history.")
+

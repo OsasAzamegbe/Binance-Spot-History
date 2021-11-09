@@ -1,8 +1,10 @@
+from businessUtils.fileIOUtils import read_from_json
+from businessUtils.errorUtils import RuntimeException
+
 from typing import Dict, List, Union, Any, Set
 from datetime import datetime
 import time
 
-from businessUtils.fileIOUtils import read_from_json
 
 
 def _map_timestamp_to_datetime(trade_object: Dict[str, Any]) -> Dict[str, Any]:
@@ -45,7 +47,7 @@ def resolve_spot_trade(spot_trade: Dict[str, Any]) -> Dict[str, Any]:
         spot_trade["fee"] = float(spot_trade["cummulativeQuoteQty"]) * fee_rate                 #0.1% fee of usdt for selling
         spot_trade["actualCost"] = float(spot_trade["cummulativeQuoteQty"]) * (1 - fee_rate)               
     else:
-        raise Exception("Unknown trade side. Neither 'BUY' nor 'SELL'.")
+        raise RuntimeException("Unknown trade side. Neither 'BUY' nor 'SELL'.")
 
     spot_trade["totalCost"] = float(spot_trade["cummulativeQuoteQty"])                          #usdt
 

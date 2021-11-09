@@ -4,7 +4,7 @@ from typing import Dict
 
 class Switch:
     switches: Dict[str, bool] = {
-        "use_refactored_code": False,
+        "use_refactored_code": True,
         "use_new_date_format_for_balance": True
     }
 
