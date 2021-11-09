@@ -5,3 +5,4 @@ env
 *.csv
 __pycache__
 *.json
+logs

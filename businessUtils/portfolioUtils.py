@@ -1,8 +1,10 @@
+from businessUtils.fileIOUtils import read_from_json
+from businessUtils.errorUtils import RuntimeException
+
 from typing import Dict, List, Union, Any, Set
 from datetime import datetime
 import time
 
-from businessUtils.fileIOUtils import read_from_json
 
 
 def _map_timestamp_to_datetime(trade_object: Dict[str, Any]) -> Dict[str, Any]:
@@ -45,7 +47,7 @@ def resolve_spot_trade(spot_trade: Dict[str, Any]) -> Dict[str, Any]:
         spot_trade["fee"] = float(spot_trade["cummulativeQuoteQty"]) * fee_rate                 #0.1% fee of usdt for selling
         spot_trade["actualCost"] = float(spot_trade["cummulativeQuoteQty"]) * (1 - fee_rate)               
     else:
-        raise Exception("Unknown trade side. Neither 'BUY' nor 'SELL'.")
+        raise RuntimeException("Unknown trade side. Neither 'BUY' nor 'SELL'.")
 
     spot_trade["totalCost"] = float(spot_trade["cummulativeQuoteQty"])                          #usdt
 
@@ -102,19 +104,38 @@ def reduce_trade_history(trade_history: List[Dict[str, Any]], new_trade_history:
 def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     '''
     resolve the objects in portfolio summary
+    filter objects with balance < 1 USDT and sort by most profitable.
     '''    
     spot_balance = {balance["symbol"]: balance for balance in read_from_json("spot_balance")}
-    portfolio_summary = [
+    portfolio_summary = (
         {
             **summary, 
             **spot_balance[summary["symbol"].split("USDT")[0]]
         }
         for summary in portfolio_summary
-    ]
-    return [
+    )
+    portfolio_summary = sorted((
         {
             **summary,
-            "pnlPercentage": (float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100
+            "pnlPercentage": "{:.3f}".format((float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100) + "%"
         }
         for summary in portfolio_summary
-    ]
+    )
+    , key=lambda x: x["pnlPercentage"], reverse=True)
+    
+    portfolio_cost = portfolio_value = 0.0
+
+    for coin in portfolio_summary:
+        portfolio_cost += coin["actualCost"]
+        portfolio_value += coin["actualValue"]
+    
+    portfolio_summary.append(
+        {
+            "portfolioCost": portfolio_cost,
+            "portfolioValue": portfolio_value,
+            "portfolioPNL": portfolio_value - portfolio_cost,
+            "portfolioPNL%": "{:.3f}".format((portfolio_value - portfolio_cost) / portfolio_cost * 100) + "%"
+        }
+    )
+
+    return portfolio_summary
