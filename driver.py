@@ -6,26 +6,25 @@ from businessLogic.portfolio import Portfolio
 
 if __name__ == '__main__':
     try:
-        symbols = (
-            "ETHUSDT",
-            "BTCUSDT",
-            "LINKUSDT",
-            "ADAUSDT",
-            "DOTUSDT",
-            "SXPUSDT",
-            "ENJUSDT",
-            "XRPUSDT",
-            "DOGEUSDT",
-            "AAVEUSDT",
-            "VETUSDT",
-            "MATICUSDT",
-            "LTCUSDT"
-        )
-
         if Switch.check_switch("use_refactored_code"):
-            portfolio = Portfolio(symbols)
+            portfolio = Portfolio()
             portfolio.update()
         else:
+            symbols = (
+                "ETHUSDT",
+                "BTCUSDT",
+                "LINKUSDT",
+                "ADAUSDT",
+                "DOTUSDT",
+                "SXPUSDT",
+                "ENJUSDT",
+                "XRPUSDT",
+                "DOGEUSDT",
+                "AAVEUSDT",
+                "VETUSDT",
+                "MATICUSDT",
+                "LTCUSDT"
+            )
             log(LogLevel.INFO, "Starting driver")
             portfolio.write_trade_history(symbols)
             portfolio.write_spot_balance()
