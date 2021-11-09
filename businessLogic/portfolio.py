@@ -21,7 +21,7 @@ from businessUtils.fileIOUtils import (
 from businessUtils.switchUtils import Switch
 from businessUtils.logUtils import LogLevel, log
 
-from typing import List, Dict, Any, Set, Tuple, Union
+from typing import List, Dict, Any, Set, Union
 from collections import defaultdict
 import time
 
@@ -113,7 +113,7 @@ class Portfolio(object):
         self.coins_filename = "spot_tickers"
         self.coins: Set[str] = set(read_from_json(self.coins_filename))
         self.binance: Client = Binance()
-        
+
         self.spot_order_history: List[Dict[str, Any]] = []
         self.spot_trades: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         self.spot_balance: List[Dict[str, Any]] = []
@@ -170,12 +170,13 @@ class Portfolio(object):
         '''
         write latest daily snapshots of spot account to json and excel
         '''
+        log(LogLevel.INFO, "Starting spot balance update.")
         spot_balance_payload = binance.get_spot_account_snapshot()
         latest_spot_balance: Dict[str, Union[int, str, Dict]] = spot_balance_payload["snapshotVos"][-1]
 
         self._update_tickers({
             balance["asset"] for balance in latest_spot_balance["data"]["balances"] 
-            if balance["asset"] != "USDT"
+            if balance["asset"] != self.base_currency
         })
         self._get_current_ticker_prices() 
 
@@ -187,13 +188,15 @@ class Portfolio(object):
         filename = "spot_balance"
         write_to_excel(self.spot_balance, filename)
         write_to_json(self.spot_balance, filename)
+        log(LogLevel.INFO, "Success updating spot balance.")
 
     def _update_tickers(self, balance_tickers: Set[str]) -> None:
         '''
-        update self.coins with new coins from the account balance tickers
+        update `self.coins` with new coins from the account `balance_tickers`
         '''
         self.coins |= balance_tickers
         write_to_json(list(self.coins), self.coins_filename)
+        log(LogLevel.INFO, f"Updated set of coins to: {self.coins}")
 
     def _get_current_ticker_prices(self) -> None:
         '''
