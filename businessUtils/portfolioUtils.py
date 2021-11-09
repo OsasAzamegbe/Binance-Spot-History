@@ -117,10 +117,9 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
     portfolio_summary = sorted((
         {
             **summary,
-            "pnlPercentage": (float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100
+            "pnlPercentage": "{:.3f}".format((float(summary["actualValue"]) - float(summary["actualCost"]))/float(summary["actualCost"]) * 100) + "%"
         }
         for summary in portfolio_summary
-        if float(summary["actualValue"]) >= 1.0
     )
     , key=lambda x: x["pnlPercentage"], reverse=True)
     
@@ -135,7 +134,7 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
             "portfolioCost": portfolio_cost,
             "portfolioValue": portfolio_value,
             "portfolioPNL": portfolio_value - portfolio_cost,
-            "portfolioPNL%": (portfolio_value - portfolio_cost) / portfolio_cost * 100
+            "portfolioPNL%": "{:.3f}".format((portfolio_value - portfolio_cost) / portfolio_cost * 100) + "%"
         }
     )
 
