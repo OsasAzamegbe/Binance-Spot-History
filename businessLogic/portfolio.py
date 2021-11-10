@@ -7,7 +7,8 @@ from businessApi.binance import (
 from businessApi.client import Client
 from businessUtils.portfolioUtils import (
     format_trade_history, 
-    create_ticker_summary, 
+    create_ticker_summary,
+    resolve_portfolio_summary_old, 
     resolve_spot_trade,
     reduce_trade_history,
     resolve_spot_balance,
@@ -71,7 +72,7 @@ def write_portfolio_summary(portfolio_stats_filename: str) -> None:
         ticker_summary = create_ticker_summary(ticker, trades)
         portfolio_summary.append(ticker_summary)
 
-    portfolio_summary = resolve_portfolio_summary(portfolio_summary)
+    portfolio_summary = resolve_portfolio_summary_old(portfolio_summary)
 
     write_to_json(portfolio_summary, "portfolio_summary")
     write_to_excel(portfolio_summary, "portfolio_summary")
@@ -116,8 +117,9 @@ class Portfolio(object):
 
         self.spot_order_history: List[Dict[str, Any]] = []
         self.spot_trades: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-        self.spot_balance: List[Dict[str, Any]] = []
+        self.spot_balance: Dict[str, Dict[str, Any]] = []
         self.ticker_prices: Dict[str, Dict[str, str]] = defaultdict(dict)
+
 
     def update(self):
         '''
@@ -127,7 +129,9 @@ class Portfolio(object):
         self._write_spot_balance()
         self._write_spot_order_history()
         self._write_refined_spot_trades()
+        self._write_portfolio_summary()
         log(LogLevel.INFO, "Done with Portfolio update.")
+
 
     def _write_refined_spot_trades(self) -> None:
         '''
@@ -167,6 +171,7 @@ class Portfolio(object):
         write_to_excel(full_trade_history, filename)
         log(LogLevel.INFO, "Success updating spot trade order history.")
 
+
     def _write_spot_balance(self) -> None:
         '''
         write latest daily snapshots of spot account to json and excel
@@ -181,15 +186,35 @@ class Portfolio(object):
         })
         self._get_current_ticker_prices() 
 
-        self.spot_balance: List[Dict[str, Any]] = resolve_spot_balance(
+        spot_balance: List[Dict[str, Any]] = resolve_spot_balance(
             latest_spot_balance["data"]["balances"], 
             self.ticker_prices
         )
+        self.spot_balance = {balance["symbol"] : balance for balance in spot_balance}
 
         filename = "spot_balance"
-        write_to_excel(self.spot_balance, filename)
-        write_to_json(self.spot_balance, filename)
+        write_to_excel(spot_balance, filename)
+        write_to_json(spot_balance, filename)
         log(LogLevel.INFO, "Success updating spot balance.")
+
+    
+    def _write_portfolio_summary(self) -> None:
+        '''
+        write spot portfolio summary to a json file and an excel file
+        '''
+        log(LogLevel.INFO, "Creating spot portfolio summary.")
+        portfolio_summary = []
+
+        for ticker, trades in self.spot_trades.items():
+            ticker_summary = create_ticker_summary(ticker.split(self.base_currency)[0], trades)
+            portfolio_summary.append(ticker_summary)
+
+        portfolio_summary = resolve_portfolio_summary(portfolio_summary, self.spot_balance)
+
+        write_to_json(portfolio_summary, "spot_portfolio_summary")
+        write_to_excel(portfolio_summary, "spot_portfolio_summary")
+        log(LogLevel.INFO, "Success creating spot portfolio summary.")
+
 
     def _update_tickers(self, balance_tickers: Set[str]) -> None:
         '''
@@ -199,9 +224,10 @@ class Portfolio(object):
         write_to_json(list(self.coins), self.coins_filename)
         log(LogLevel.INFO, f"Updated set of coins to: {self.coins}")
 
+
     def _get_current_ticker_prices(self) -> None:
         '''
-        update `self.ticker_prices` with latest price info for each tick in `tickers`
+        update `self.ticker_prices` with latest price info for each tick in `self.coins`
         '''
         for tick in self.coins:
             self.ticker_prices[tick] = binance.get_ticker_price(tick + self.base_currency)
