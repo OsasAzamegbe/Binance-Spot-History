@@ -25,13 +25,6 @@ def format_trade_history(trade_history: List[Dict[str, Any]]) -> None:
     list(map(_map_timestamp_to_datetime, trade_history))
 
 
-def reduce_field(trade_list: List[Dict[str, Any]], field: str) -> float:
-    '''
-    reduce (sum up) fields present in list of dict
-    '''
-    return sum(float(trade[field]) if trade["side"] == "BUY" else -float(trade[field]) for trade in trade_list)
-
-
 def resolve_spot_trade(spot_trade: Dict[str, Any]) -> Dict[str, Any]:
     '''
     resolve fields  for a buy or sell side spot trade.
@@ -57,16 +50,28 @@ def resolve_spot_trade(spot_trade: Dict[str, Any]) -> Dict[str, Any]:
 def create_ticker_summary(ticker: str, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
     '''
     create a ticker summary from a ticker and list of trades.
-    '''       
-    ticker_summary = {
+    '''
+    origQty = actualQty = totalCost = actualCost = totalSaleQty = totalSaleValue = float(0)
+    for trade in trades:
+        if trade["side"] == "BUY":
+            origQty += float(trade['origQty'])
+            actualQty += float(trade['actualQty'])
+            totalCost += float(trade['totalCost'])
+            actualCost += float(trade['actualCost'])
+        else:
+            totalSaleQty += float(trade['origQty'])
+            totalSaleValue += float(trade['actualCost'])
+
+    return {
         "symbol": ticker,
         "date": str(datetime.now()),
-        "actualQty": reduce_field(trades, "actualQty"),
-        "totalCost": reduce_field(trades, "totalCost"),
-        "actualCost": reduce_field(trades, "actualCost")
+        "origQty": origQty,
+        "actualQty": actualQty,
+        "totalCost": totalCost,
+        "actualCost": actualCost,
+        "totalSaleQty": totalSaleQty,
+        "totalSaleValue": totalSaleValue
     }
-
-    return ticker_summary
 
 
 def resolve_spot_balance(spot_balance: List[Dict[str, Any]], ticker_prices: Dict[str, Dict[str, str]]) -> List[Dict[str, Any]]:
@@ -101,10 +106,10 @@ def reduce_trade_history(trade_history: List[Dict[str, Any]], new_trade_history:
     trade_history.extend(trade for trade in new_trade_history if trade["orderId"] not in cached_trade_history)
 
 
-def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def resolve_portfolio_summary_old(portfolio_summary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     '''
     resolve the objects in portfolio summary
-    filter objects with balance < 1 USDT and sort by most profitable.
+    and sort by most profitable.
     '''    
     spot_balance = {balance["symbol"]: balance for balance in read_from_json("spot_balance")}
     portfolio_summary = (
@@ -135,6 +140,50 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]]) -> List[D
             "portfolioValue": portfolio_value,
             "portfolioPNL": portfolio_value - portfolio_cost,
             "portfolioPNL%": "{:.3f}".format((portfolio_value - portfolio_cost) / portfolio_cost * 100) + "%"
+        }
+    )
+
+    return portfolio_summary
+
+def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]], spot_balance: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    '''
+    resolve the objects in portfolio summary
+    and sort by most profitable.
+    '''    
+    portfolio_summary = (
+        {
+            **summary, 
+            **spot_balance[summary["symbol"]],
+            "totalQty": summary["totalSaleQty"] + float(spot_balance[summary["symbol"]]["balanceQty"]),
+            "totalValue": summary["totalSaleValue"] + spot_balance[summary["symbol"]]["actualValue"],
+        }
+        for summary in portfolio_summary
+    )
+    portfolio_summary = sorted((
+        {
+            **summary,
+            "pnl": summary["totalValue"] - summary["totalCost"],
+            "pnl%": "{:.2f}".format((float(summary["totalValue"]) - float(summary["totalCost"]))/(float(summary["totalCost"]) or 1.0) * 100) + "%"
+        }
+        for summary in portfolio_summary
+    )
+    , key=lambda x: float(x["pnl%"][:-1]), reverse=True)
+    
+    portfolio_cost = portfolio_value = 0.0
+    portfolio_cost_offset = 345.85 # for USDT cost not included in usdt balance
+    for coin in portfolio_summary:
+        portfolio_cost += coin["totalCost"]
+        portfolio_value += coin["actualValue"]
+
+    portfolio_value += spot_balance["USDT"]["actualValue"]
+    portfolio_cost -= portfolio_cost_offset
+    
+    portfolio_summary.append(
+        {
+            "portfolioCost": portfolio_cost,
+            "portfolioValue": portfolio_value,
+            "portfolioPNL": portfolio_value - portfolio_cost,
+            "portfolioPNL%": "{:.2f}".format((portfolio_value - portfolio_cost) / portfolio_cost * 100) + "%"
         }
     )
 
