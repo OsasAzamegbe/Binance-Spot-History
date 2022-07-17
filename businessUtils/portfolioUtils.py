@@ -153,9 +153,9 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]], spot_bala
     portfolio_summary = (
         {
             **summary, 
-            **spot_balance[summary["symbol"]],
-            "totalQty": summary["totalSaleQty"] + float(spot_balance[summary["symbol"]]["balanceQty"]),
-            "totalValue": summary["totalSaleValue"] + spot_balance[summary["symbol"]]["actualValue"],
+            **spot_balance.get(summary["symbol"], {}),
+            "totalQty": summary["totalSaleQty"] + float(spot_balance.get(summary["symbol"], {"balanceQty": 0})["balanceQty"]),
+            "totalValue": summary["totalSaleValue"] + spot_balance.get(summary["symbol"], {"actualValue": 0})["actualValue"],
         }
         for summary in portfolio_summary
     )
@@ -173,7 +173,7 @@ def resolve_portfolio_summary(portfolio_summary: List[Dict[str, Any]], spot_bala
     portfolio_cost_offset = 345.85 # for USDT cost not included in usdt balance
     for coin in portfolio_summary:
         portfolio_cost += coin["totalCost"]
-        portfolio_value += coin["actualValue"]
+        portfolio_value += coin.get("actualValue", 0.0)
 
     portfolio_value += spot_balance["USDT"]["actualValue"]
     portfolio_cost -= portfolio_cost_offset
