@@ -5,6 +5,7 @@ from businessApi.binance import (
     get_ticker_price
 )
 from businessApi.client import Client
+from businessUtils.errorUtils import ClientException
 from businessUtils.portfolioUtils import (
     format_trade_history, 
     create_ticker_summary,
@@ -154,8 +155,18 @@ class Portfolio(object):
         log(LogLevel.INFO, "Starting spot trade order history update.")
         for symbol in self.coins:
             log(LogLevel.INFO, "Fetching spot order history for symbol: ", symbol)
-            symbol_order_history = self.binance.get_all_orders(symbol + self.base_currency)
-            self.spot_order_history.extend(symbol_order_history)
+            retry = 0
+            try:
+                symbol_order_history = self.binance.get_all_orders(symbol + self.base_currency)
+                self.spot_order_history.extend(symbol_order_history)
+            except ClientException as e:
+                if retry == 0:
+                    retry = 1
+                    log(LogLevel.INFO, "RETRYING WITH BUSD...")
+                    symbol_order_history = self.binance.get_all_orders(symbol + "BUSD")
+                    self.spot_order_history.extend(symbol_order_history)
+                    continue
+                raise e
 
         format_trade_history(self.spot_order_history)
 
@@ -230,4 +241,13 @@ class Portfolio(object):
         update `self.ticker_prices` with latest price info for each tick in `self.coins`
         '''
         for tick in self.coins:
-            self.ticker_prices[tick] = binance.get_ticker_price(tick + self.base_currency)
+            retry = 0
+            try:
+                self.ticker_prices[tick] = binance.get_ticker_price(tick + self.base_currency)
+            except ClientException as e:
+                if retry == 0:
+                    retry = 1
+                    log(LogLevel.INFO, "RETRYING WITH BUSD...")
+                    self.ticker_prices[tick] = binance.get_ticker_price(tick + "BUSD")
+                    continue
+                raise e

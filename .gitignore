@@ -4,5 +4,6 @@ env
 *.xlsx
 *.csv
 __pycache__
+*.pyc
 *.json
 logs
